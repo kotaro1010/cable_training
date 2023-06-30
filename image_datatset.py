@@ -1,5 +1,5 @@
 from glob import glob
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import torchvision
 import torchvision.transforms as transforms
@@ -7,10 +7,17 @@ from torch.utils.data.dataset import Dataset
 
 
 class CableCrackImageDataset(Dataset):
-    def __init__(self, images_directory, input_shape: Tuple[int, int] = (224, 224)):
-        pngs = glob(f"{images_directory}/**/*.png", recursive=True)
-        jpgs = glob(f"{images_directory}/**/*.jpg", recursive=True)
-        all_imgs = pngs + jpgs
+    def __init__(self, images_directory: Union[str, List[str]], input_shape: Tuple[int, int] = (224, 224)):
+        # 画像データのパスを探索、取得する。
+        if type(images_directory) is str:
+            pngs = glob(f"{images_directory}/**/*.png", recursive=True)
+            jpgs = glob(f"{images_directory}/**/*.jpg", recursive=True)
+            all_imgs = pngs + jpgs
+        elif type(images_directory) is list:
+            all_imgs = self.get_all_image_data(data_dirs=images_directory)
+        else:
+            assert False
+
         all_imgs = [img_path for img_path in all_imgs if "all_bind_Correction" not in img_path]  # 展開図画像を除く
         self.all_imgs = sorted(all_imgs)
         self.labels = [1 if "/anomalous/" in path else 0 for path in all_imgs]
@@ -39,3 +46,12 @@ class CableCrackImageDataset(Dataset):
 
     def __len__(self):
         return len(self.all_imgs)
+
+    def get_all_image_data(self, data_dirs: List[str]) -> List[str]:
+        all_imgs_path = []
+        for data_dir in data_dirs:
+            pngs = glob(f"{data_dir}/**/*.png", recursive=True)
+            jpgs = glob(f"{data_dir}/**/*.jpg", recursive=True)
+            imgs = pngs + jpgs
+            all_imgs_path += imgs
+        return all_imgs_path
