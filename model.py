@@ -6,9 +6,21 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report
 from torch import nn
 from torch.nn import functional as F
-from torchvision.models.efficientnet import EfficientNet_V2_S_Weights, efficientnet_v2_s
-from torchvision.models.swin_transformer import Swin_V2_S_Weights, swin_v2_s
-from torchvision.models.convnext import ConvNeXt_Small_Weights, convnext_small
+from torchvision.models.efficientnet import (
+    EfficientNet_V2_S_Weights,
+    efficientnet_v2_s,
+    EfficientNet_V2_M_Weights,
+    efficientnet_v2_m,
+)
+from torchvision.models.swin_transformer import Swin_V2_S_Weights, swin_v2_s, Swin_V2_B_Weights, swin_v2_b
+from torchvision.models.convnext import (
+    ConvNeXt_Small_Weights,
+    convnext_small,
+    ConvNeXt_Base_Weights,
+    convnext_base,
+    ConvNeXt_Large_Weights,
+    convnext_large,
+)
 from torchvision.models.vision_transformer import ViT_B_16_Weights, vit_b_16
 
 
@@ -20,11 +32,23 @@ class CrackDetectionModel(pl.LightningModule):
         if model_name == "efficientnet_v2_s":
             self.model = efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.IMAGENET1K_V1)
             self.model.classifier[1] = nn.Linear(self.model.classifier[1].in_features, 1)
+        elif model_name == "efficientnet_v2_m":
+            self.model = efficientnet_v2_m(weights=EfficientNet_V2_M_Weights.IMAGENET1K_V1)
+            self.model.classifier[1] = nn.Linear(self.model.classifier[1].in_features, 1)
         elif model_name == "swin_v2_s":
             self.model = swin_v2_s(weights=Swin_V2_S_Weights.IMAGENET1K_V1)
             self.model.head = nn.Linear(self.model.head.in_features, 1)
+        elif model_name == "swin_v2_b":
+            self.model = swin_v2_b(weights=Swin_V2_B_Weights.IMAGENET1K_V1)
+            self.model.head = nn.Linear(self.model.head.in_features, 1)
         elif model_name == "convnext_small":
             self.model = convnext_small(weights=ConvNeXt_Small_Weights.IMAGENET1K_V1)
+            self.model.classifier[2] = nn.Linear(self.model.classifier[2].in_features, 1)
+        elif model_name == "convnext_base":
+            self.model = convnext_base(weights=ConvNeXt_Base_Weights.IMAGENET1K_V1)
+            self.model.classifier[2] = nn.Linear(self.model.classifier[2].in_features, 1)
+        elif model_name == "convnext_large":
+            self.model = convnext_large(weights=ConvNeXt_Large_Weights.IMAGENET1K_V1)
             self.model.classifier[2] = nn.Linear(self.model.classifier[2].in_features, 1)
         elif model_name == "vit_b_16":
             self.model = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
