@@ -93,11 +93,6 @@ class CrackDetectionModel(pl.LightningModule):
         # Calculate test metrics
         preds = (output > 0.5).float().view(-1).cpu()
         label = label.cpu()
-        # self.log("test_acc", accuracy_score(label, preds), on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        # self.log("test_recall", recall_score(label, preds), on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        # self.log(
-        #     "test_precision", precision_score(label, preds), on_step=True, on_epoch=True, prog_bar=True, logger=True
-        # )
         self.test_step_y_pred.append(preds)
         self.test_step_y_true.append(label)
         return preds
