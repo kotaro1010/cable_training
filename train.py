@@ -1,10 +1,14 @@
 import os
 from datetime import datetime, timedelta, timezone
+from typing import List, Union
 
 import lightning as pl
+import numpy as np
+import torch
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import WeightedRandomSampler
 
 import wandb
 from image_datatset import CableCrackImageDataset
@@ -12,7 +16,9 @@ from model import CrackDetectionModel
 from utils import fix_seed
 
 
-def get_dataloader(dataset_path: str, batch_size: int = 8, shuffle: bool = True) -> DataLoader:
+def get_dataloader(
+    dataset_path: Union[str, List[str]], batch_size: int = 8, shuffle: bool = True, use_sampler: bool = False
+) -> DataLoader:
     """データローダーを返す。
 
     Args:
@@ -22,19 +28,36 @@ def get_dataloader(dataset_path: str, batch_size: int = 8, shuffle: bool = True)
     Returns:
         DataLoader: データローダー
     """
-    img_dir = os.path.abspath(dataset_path)
-    assert os.path.isdir(img_dir)
+    if type(dataset_path) is str:
+        img_dir = os.path.abspath(dataset_path)
+    elif type(dataset_path) is list:
+        img_dir = list(map(os.path.abspath, dataset_path))
+    else:
+        assert False
 
-    dataset_train = CableCrackImageDataset(images_directory=img_dir)
-    dataloader_ = DataLoader(dataset=dataset_train, batch_size=batch_size, shuffle=shuffle)
+    dataset_ = CableCrackImageDataset(images_directory=img_dir)
+    if use_sampler:
+        num_anomalous = np.array(dataset_.labels).sum()
+        num_normal = len(dataset_.labels) - num_anomalous
+        class_counts = [num_normal, num_anomalous]
+        class_weights = 1 / torch.Tensor(class_counts)
+        weights = [class_weights[int(i)] for i in dataset_.labels]
+        sampler = WeightedRandomSampler(weights=weights, num_samples=len(dataset_.labels), replacement=True)
+        return DataLoader(dataset=dataset_, batch_size=batch_size, sampler=sampler)
+
+    dataloader_ = DataLoader(dataset=dataset_, batch_size=batch_size, shuffle=shuffle)
     return dataloader_
 
 
 def train(config):
     fix_seed(seed=config["seed"])
-    dataloader_train = get_dataloader(config["train_data_dir"], config["train_batch_size"])
-    dataloader_val = get_dataloader(config["val_data_dir"], config["val_batch_size"])
-    dataloader_test = get_dataloader(config["test_data_dir"], config["test_batch_size"], shuffle=False)
+    dataloader_train = get_dataloader(
+        config["train_data_dir"], config["train_batch_size"], shuffle=True, use_sampler=True
+    )
+    dataloader_val = get_dataloader(config["val_data_dir"], config["val_batch_size"], shuffle=False, use_sampler=False)
+    dataloader_test = get_dataloader(
+        config["test_data_dir"], config["test_batch_size"], shuffle=False, use_sampler=False
+    )
 
     ####################
     # prepare callback
