@@ -45,6 +45,7 @@ RUN $(which python3) -m pip install \
     --extra-index-url https://download.pytorch.org/whl/cu116
 RUN $(which python3) -m pip install \
     lightning pandas numpy scikit-learn \
+    opencv-python scikit-image \
     black flake8
 
 WORKDIR /home/appuser/cable_bridge
