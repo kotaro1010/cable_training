@@ -31,14 +31,23 @@ def image_contrast(img):
     return img_contrast
 
 
+def laplacian_process(img):
+    img = cv2.GaussianBlur(img, (5, 5), 0)
+    edges = cv2.Laplacian(img, cv2.CV_64F)
+    edges = 255 * (edges / np.max(np.abs(edges)))
+    return edges.astype(np.int8)
+
+
 def get_composed_image(image):
     # NOTICE: B:G:R
     # image_bin = image_binarized(image)
     image_cont = image_contrast(image)
-    image_line = cv2.Canny(image, 25, 100)
-    image_lbp = local_binary_pattern(image=image, P=40, R=15, method="default")
+    # image_line = cv2.Canny(image, 25, 100)
+    image_laplacian = laplacian_process(image)
+    image_lbp = local_binary_pattern(image=image, P=5, R=1, method="default")
     # composed_image = np.stack([image_bin, image_line, image_cont], axis=2)
-    composed_image = np.stack([image_cont, image_line, image_lbp], axis=2)
+    # composed_image = np.stack([image_cont, image_line, image_lbp], axis=2)
+    composed_image = np.stack([image_cont, image_laplacian, image_lbp], axis=2)
     return composed_image
 
 
@@ -87,6 +96,6 @@ def main(src_dir, dist_dir):
 
 if __name__ == "__main__":
     main(
-        "dev3_testing_correction_v2_splited",
-        "dev3_testing_correction_v2_splited_preprocessing_cont_canny_lbp",
+        "re_annotation_crop_20230613_splited",
+        "re_annotation_crop_20230613_splited_preprocessing_cont_lap_lbp",
     )

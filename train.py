@@ -124,16 +124,16 @@ if __name__ == "__main__":
         "seed": 42,
         "model_name": model_name[0],
         "train_data_dir": [
-            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_canny_lbp/train",
-            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_canny_lbp/train",
+            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_lap_lbp/train",
+            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_lap_lbp/train",
         ],
         "val_data_dir": [
-            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_canny_lbp/val",
-            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_canny_lbp/val",
+            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_lap_lbp/val",
+            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_lap_lbp/val",
         ],
         "test_data_dir": [
-            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_canny_lbp/test",
-            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_canny_lbp/test",
+            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_lap_lbp/test",
+            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_lap_lbp/test",
         ],
         "train_batch_size": 8,
         "val_batch_size": 8,
