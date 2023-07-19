@@ -112,23 +112,35 @@ def train(config):
 if __name__ == "__main__":
     model_name = [
         # "swin_v2_s",
-        "efficientnet_v2_s",
+        # "swin_v2_b",
+        # "efficientnet_v2_s",
+        "efficientnet_v2_m",
         # "convnext_small",
+        # "convnext_base",
+        # "convnext_large",
         # "vit_b_16",
     ]
     config = {
         "seed": 42,
         "model_name": model_name[0],
-        # "train_data_dir": "./dataset/dev3_testing_correction_splited",
-        "train_data_dir": "dataset/re_annotation_crop_20230613_splited/train",
-        "val_data_dir": "dataset/re_annotation_crop_20230613_splited/val",
-        "test_data_dir": "dataset/dev3_testing_correction",
+        "train_data_dir": [
+            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_canny_lbp/train",
+            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_canny_lbp/train",
+        ],
+        "val_data_dir": [
+            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_canny_lbp/val",
+            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_canny_lbp/val",
+        ],
+        "test_data_dir": [
+            "dataset/re_annotation_crop_20230613_splited_preprocessing_cont_canny_lbp/test",
+            "dataset/dev3_testing_correction_v2_splited_preprocessing_cont_canny_lbp/test",
+        ],
         "train_batch_size": 8,
         "val_batch_size": 8,
         "test_batch_size": 8,
         "max_epochs": 10,
         "wandb_group": "first",
-        "lr": 1e-5,
+        "lr": 1e-6,
     }
     wandb.init(
         project="cable-crack-detection-v3",
