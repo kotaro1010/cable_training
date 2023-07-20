@@ -82,8 +82,10 @@ def main(src_dir, dist_dir):
             os.makedirs(os.path.join(DATASET_DIR, dist_dir, job_type, class_))
 
     for img_path in all_imgs:
-        img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        img_ = get_composed_image(img)
+        # img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        # img_ = get_composed_image(img)
+        img = cv2.imread(img_path)
+        img_ = image_contrast(img)
 
         filename = os.path.basename(img_path)
         job_type = get_jobtype(img_path)
@@ -95,7 +97,8 @@ def main(src_dir, dist_dir):
 
 
 if __name__ == "__main__":
+    src_dir_name = "re_annotation_crop_20230613_splited"
     main(
-        "re_annotation_crop_20230613_splited",
-        "re_annotation_crop_20230613_splited_preprocessing_cont_lap_lbp",
+        src_dir_name,
+        src_dir_name + "_preprocessing_cont",
     )
