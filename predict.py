@@ -26,9 +26,14 @@ def get_orientation_by_path(path):
         return
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("datadir", help="解析をしたいディレクトリを指定")
+def write_progress(filepath: str, text: str):
+    try:
+        with open(f"{filepath}/predict.log", "a") as f:
+            f.write(text + "\n")
+    except FileNotFoundError() as e:
+        print(e)
+    print(text)
+
 
 def predict(img_dir: str = ""):
     # 顧客PCのGPUメモリ容量に合わせる。(GTX1050)
@@ -38,7 +43,16 @@ def predict(img_dir: str = ""):
     img_dir_for_test = "./dataset/dev3_testing_correction_v2_splited/test"
     # img_dir_for_test = "./dataset/Correction"
     # img_dir_for_test = "dataset/splited_normal_anomalous_v5/test"
-    dataset_test = CableCrackImageDataset(images_directory=img_dir_for_test)
+    write_progress(img_dir, "=====Start Prediction=====")
+
+    # 前処理
+    write_progress(img_dir, "=====Session 01 Start Preprocessing=====")
+    # TODO
+    write_progress(img_dir, "=====Session 01 Preprocessing Complete=====")
+
+    write_progress(img_dir, "=====Session 02 Start Analysis=====")
+    # データローダーの用意
+    dataset_test = CableCrackImageDataset(images_directory=img_dir)
     dataloader_test = DataLoader(dataset=dataset_test, batch_size=8, shuffle=False)
     # model = CrackDetectionModel.load_from_checkpoint("lightning_logs/version_4/checkpoints/epoch=9-step=710.ckpt")
     model_path = "saved_models/model_ckpt/2023-07-05T22:21:47.341853+09:00_dainty-universe-95_epoch=8_step=2520_val_loss=0.14.ckpt"
@@ -51,6 +65,7 @@ def predict(img_dir: str = ""):
     )
     predictions_raw = trainer.predict(model, dataloaders=dataloader_test, return_predictions=True)
     predictions = torch.where(torch.concatenate(predictions_raw) > 0.5, 1, 0).squeeze()
+    write_progress(img_dir, "=====Session 02 Analysis Complete=====")
 
     show_analysis = True
     if show_analysis is True:
@@ -80,6 +95,7 @@ def predict(img_dir: str = ""):
     #########
     # 後処理 #
     #########
+    write_progress(img_dir, "=====Session 03 Start Postprocessing=====")
     df = pd.DataFrame.from_dict({"imgs": dataset_test.all_imgs, "prediction": predictions})
     # 各方向（左上右下）毎に、それぞれ列に配置する。
     df["orientation"] = df["imgs"].apply(get_orientation_by_path)
@@ -112,8 +128,10 @@ def predict(img_dir: str = ""):
         axis=1,
         keys=["left", "top", "right", "bottom", "result"],
     )
-    df_for_save.to_csv(f"{img_dir_for_test}/result_pred.csv", index=False)
-    print()
+    df_for_save.to_csv(f"{img_dir}/result_pred.csv", index=False)
+    write_progress(img_dir, "=====Session 03 Postprocessing Complete=====")
+
+    write_progress(img_dir, "=====All Complete=====")
 
 
 if __name__ == "__main__":
