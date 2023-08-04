@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 
 import lightning as pl
@@ -27,9 +28,11 @@ def get_orientation_by_path(path):
 
 
 def write_progress(filepath: str, text: str):
+    JST = datetime.timezone(datetime.timedelta(hours=+9), "JST")
+    time_now = datetime.datetime.now(tz=JST).isoformat()
     try:
-        with open(f"{filepath}/predict.log", "a") as f:
-            f.write(text + "\n")
+        with open(f"{filepath}/prediction.log", "a") as f:
+            f.write(f"[{time_now}]: {text}\n")
     except FileNotFoundError() as e:
         print(e)
     print(text)
