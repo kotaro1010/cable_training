@@ -30,6 +30,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("datadir", help="解析をしたいディレクトリを指定")
 
+def predict(img_dir: str = ""):
     # 顧客PCのGPUメモリ容量に合わせる。(GTX1050)
     # TODO 本番では解除するように。
     torch.cuda.set_per_process_memory_fraction(0.2, 0)
@@ -116,4 +117,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--result_dir_name")
+    args = parser.parse_args()
+    img_dir = args.result_dir_name
+    img_dir = "./dataset/dev3_testing_correction_black_splited"
+
+    if img_dir is not None and os.path.isdir(img_dir):
+        predict(img_dir=img_dir)
+    else:
+        raise OSError
