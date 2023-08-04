@@ -38,6 +38,42 @@ def laplacian_process(img):
     return edges.astype(np.int8)
 
 
+def build_gabor_filters(
+    ksize=31,
+    sigma=5,
+    theta_range=(0, np.pi, np.pi / 8),
+    lambd=2.0,
+    gamma=0.5,
+):
+    filters = []
+    for theta in np.arange(*theta_range):
+        kernel = cv2.getGaborKernel(
+            ksize=(ksize, ksize),
+            sigma=sigma,
+            theta=theta,
+            lambd=lambd,
+            gamma=gamma,
+            psi=0,
+            # ktype=cv2.CV_32F,
+        )
+        # kernel /= 1.5 * kernel.sum()
+        filters.append(kernel)
+        cv2.imwrite(f"filter_{theta}_img.png", ((kernel + 1) * 128).astype(np.uint8))
+    return filters
+
+
+def apply_gabor_filters(image, filters):
+    applied_images = []
+    for filter_ in filters:
+        filtered_img = cv2.filter2D(image, cv2.CV_8UC3, filter_)
+        applied_images.append(filtered_img)
+
+    # 合成
+    img_gabor = (np.sum(np.array(applied_images), axis=0) / len(filters)).astype(np.uint8)
+    return img_gabor
+
+
+
 def get_composed_image(image):
     # NOTICE: B:G:R
     # image_bin = image_binarized(image)
