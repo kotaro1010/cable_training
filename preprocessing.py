@@ -73,6 +73,18 @@ def apply_gabor_filters(image, filters):
     return img_gabor
 
 
+def get_sharpen_image(image):
+    image_blur = cv2.GaussianBlur(image, (5, 5), 0)
+    kernel = np.array(
+        [
+            [0, -1, 0],
+            [-1, 5, -1],
+            [0, -1, 0],
+        ]
+    )
+    img_dst = cv2.filter2D(image_blur, -1, kernel=kernel)
+    return img_dst
+
 
 def get_composed_image(image):
     # NOTICE: B:G:R
