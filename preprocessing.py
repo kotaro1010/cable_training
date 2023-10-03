@@ -31,6 +31,19 @@ def image_contrast(img):
     return img_contrast
 
 
+def equialize_hist(img):
+    img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
+    img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
+    img_ = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
+    return img_
+
+
+def get_clahe_image(img):
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    img_dist = clahe.apply(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+    return img_dist
+
+
 def laplacian_process(img):
     img = cv2.GaussianBlur(img, (5, 5), 0)
     edges = cv2.Laplacian(img, cv2.CV_64F)
@@ -86,16 +99,35 @@ def get_sharpen_image(image):
     return img_dst
 
 
+def get_unsharp_mask_image(image):
+    image_blur = cv2.GaussianBlur(image, (5, 5), 0)
+    img_dst = cv2.addWeighted(
+        src1=image,
+        alpha=1.5,
+        src2=image_blur,
+        beta=-0.5,
+        gamma=0,
+    )
+    return img_dst
+
+
 def get_composed_image(image):
     # NOTICE: B:G:R
     # image_bin = image_binarized(image)
     image_cont = image_contrast(image)
     # image_line = cv2.Canny(image, 25, 100)
     image_laplacian = laplacian_process(image)
-    image_lbp = local_binary_pattern(image=image, P=5, R=1, method="default")
+    image_lbp = local_binary_pattern(
+        image=cv2.GaussianBlur(image, (5, 5), 0),
+        P=5,
+        R=1,
+        method="default",
+    )
+    img_gabor = apply_gabor_filters(image=image, filters=build_gabor_filters())
     # composed_image = np.stack([image_bin, image_line, image_cont], axis=2)
     # composed_image = np.stack([image_cont, image_line, image_lbp], axis=2)
     composed_image = np.stack([image_cont, image_laplacian, image_lbp], axis=2)
+    # composed_image = np.stack([image_cont, image_laplacian, img_gabor], axis=2)
     return composed_image
 
 
@@ -133,7 +165,10 @@ def main(src_dir, dist_dir):
         # img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
         # img_ = get_composed_image(img)
         img = cv2.imread(img_path)
-        img_ = image_contrast(img)
+        # img_ = get_clahe_image(img)
+        # img_ = get_sharpen_image(img_)
+        # img_ = cv2.cvtColor(img_, cv2.COLOR_GRAY2BGR)
+        img_ = equialize_hist(img)
 
         filename = os.path.basename(img_path)
         job_type = get_jobtype(img_path)
@@ -145,8 +180,12 @@ def main(src_dir, dist_dir):
 
 
 if __name__ == "__main__":
-    src_dir_name = "re_annotation_crop_20230613_splited"
-    main(
-        src_dir_name,
-        src_dir_name + "_preprocessing_cont",
-    )
+    for src_dir_name in [
+        # "re_annotation_crop_20230613_splited",
+        # "dev3_testing_correction_v2_splited",
+        "dev3_testing_correction_black_splited",
+    ]:
+        main(
+            src_dir_name,
+            src_dir_name + "_preprocessing_eq_hist2",
+        )
