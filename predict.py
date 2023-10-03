@@ -1,16 +1,26 @@
 import argparse
 import datetime
+from glob import glob
 import os
+import sys
+import cv2
 
 import lightning as pl
 import pandas as pd
 import torch
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+)
 from torch.utils.data import DataLoader
 import torchvision
 
 from image_datatset import CableCrackImageDataset
 from model import CrackDetectionModel
+from preprocessing import equialize_hist
 
 
 def get_orientation_by_path(path):
@@ -43,22 +53,55 @@ def predict(img_dir: str = ""):
     # TODO 本番では解除するように。
     torch.cuda.set_per_process_memory_fraction(0.2, 0)
 
-    img_dir_for_test = "./dataset/dev3_testing_correction_v2_splited/test"
-    # img_dir_for_test = "./dataset/Correction"
-    # img_dir_for_test = "dataset/splited_normal_anomalous_v5/test"
     write_progress(img_dir, "=====Start Prediction=====")
 
     # 前処理
-    write_progress(img_dir, "=====Session 01 Start Preprocessing=====")
-    # TODO
-    write_progress(img_dir, "=====Session 01 Preprocessing Complete=====")
+    write_progress(img_dir, "=====Session 1 Start Preprocessing=====")
+    # 前処理実行
+    img_dir_cor = os.path.join(img_dir, "Correction")
+    img_dir_dist = os.path.join(img_dir, "Enhanced")
+    os.makedirs(img_dir_dist, exist_ok=True)
+    png_imgs_cor = sorted(glob(os.path.join(img_dir_cor, "**", "*.png"), recursive=True))
+    png_imgs_cor = [img for img in png_imgs_cor if not "/all_bind_Correction/" in img]
+    for png_path in png_imgs_cor:
+        img_ = cv2.imread(png_path)
+        img_ = equialize_hist(img_)
 
-    write_progress(img_dir, "=====Session 02 Start Analysis=====")
+        filename = ".".join(os.path.basename(png_path).split(".")[:-1])
+        # TODO フォルダ構成が違うので要変更。
+        # 右左上下と分かれてる。
+        cv2.imwrite(os.path.join(img_dir_dist, f"{filename}.jpg"), img_, [cv2.IMWRITE_JPEG_QUALITY, 95])
+
+    # オリジナル画像のサイズが大きいので縮小する。
+    img_dir_cor = os.path.join(img_dir, "Original")
+    img_dir_dist = os.path.join(img_dir, "Converted")
+    os.makedirs(img_dir_dist, exist_ok=True)
+    png_imgs_cor = sorted(glob(os.path.join(img_dir_cor, "**", "*.png"), recursive=True))
+    png_imgs_cor = [img for img in png_imgs_cor if not "/all_bind_Correction/" in img]
+    for png_path in png_imgs_cor:
+        img_ = cv2.imread(png_path)
+        # H, W, C = img_.shape
+        img_ = cv2.resize(img_, dsize=None, fx=0.5, fy=0.5)
+
+        filename = ".".join(os.path.basename(png_path).split(".")[:-1])
+        cv2.imwrite(os.path.join(img_dir_dist, f"{filename}.jpg"), img_, [cv2.IMWRITE_JPEG_QUALITY, 95])
+
+    write_progress(img_dir, "=====Session 1 Preprocessing Complete=====")
+
+    write_progress(img_dir, "=====Session 2 Start Analysis=====")
     # データローダーの用意
-    dataset_test = CableCrackImageDataset(images_directory=img_dir)
+    img_dir_cor = os.path.join(img_dir, "Enhanced")
+    dataset_test = CableCrackImageDataset(images_directory=img_dir_cor)
+
+    ##################
+    # DUMMY
+    ##################
+    # dataset_test = CableCrackImageDataset(images_directory=img_dir)
+
     dataloader_test = DataLoader(dataset=dataset_test, batch_size=8, shuffle=False)
-    # model = CrackDetectionModel.load_from_checkpoint("lightning_logs/version_4/checkpoints/epoch=9-step=710.ckpt")
-    model_path = "saved_models/model_ckpt/2023-07-05T22:21:47.341853+09:00_dainty-universe-95_epoch=8_step=2520_val_loss=0.14.ckpt"
+
+    # モデルの用意
+    model_path = "saved_models/model_ckpt/2023-08-22T22:17:01.500486+09:00_splendid-deluge-127_epoch=9_step=6980_val_loss=0.11.ckpt"
     model_name = os.path.basename(model_path)
     wandb_run_name = model_name.split("_")[1]
     model = CrackDetectionModel.load_from_checkpoint(model_path)
@@ -68,13 +111,13 @@ def predict(img_dir: str = ""):
     )
     predictions_raw = trainer.predict(model, dataloaders=dataloader_test, return_predictions=True)
     predictions = torch.where(torch.concatenate(predictions_raw) > 0.5, 1, 0).squeeze()
-    write_progress(img_dir, "=====Session 02 Analysis Complete=====")
+    write_progress(img_dir, "=====Session 2 Analysis Complete=====")
 
     show_analysis = True
     if show_analysis is True:
-        print(accuracy_score(dataset_test.labels, predictions))
-        print(recall_score(dataset_test.labels, predictions))
-        print(precision_score(dataset_test.labels, predictions))
+        print("accuracy", accuracy_score(dataset_test.labels, predictions))
+        print("recall", recall_score(dataset_test.labels, predictions))
+        print("precision", precision_score(dataset_test.labels, predictions))
         print(classification_report(dataset_test.labels, predictions))
         print(confusion_matrix(dataset_test.labels, predictions))
 
@@ -98,7 +141,7 @@ def predict(img_dir: str = ""):
     #########
     # 後処理 #
     #########
-    write_progress(img_dir, "=====Session 03 Start Postprocessing=====")
+    write_progress(img_dir, "=====Session 3 Start Postprocessing=====")
     df = pd.DataFrame.from_dict({"imgs": dataset_test.all_imgs, "prediction": predictions})
     # 各方向（左上右下）毎に、それぞれ列に配置する。
     df["orientation"] = df["imgs"].apply(get_orientation_by_path)
@@ -132,19 +175,28 @@ def predict(img_dir: str = ""):
         keys=["left", "top", "right", "bottom", "result"],
     )
     df_for_save.to_csv(f"{img_dir}/result_pred.csv", index=False)
-    write_progress(img_dir, "=====Session 03 Postprocessing Complete=====")
+    write_progress(img_dir, "=====Session 3 Postprocessing Complete=====")
 
-    write_progress(img_dir, "=====All Complete=====")
+    write_progress(img_dir, "=====ALL Complete=====")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--result_dir_name")
+    parser.add_argument("-d", "--result_dir_name", default=None)
     args = parser.parse_args()
-    img_dir = args.result_dir_name
-    img_dir = "./dataset/dev3_testing_correction_black_splited"
+
+    if args.result_dir_name is None:
+        print("args.result_dir_name is None")
+        sys.exit(1)
+    img_dir = os.path.abspath(os.path.join(os.environ["HOME"], "videos", args.result_dir_name))
+
+    #########
+    # DUMMY #
+    #########
+    # img_dir = "dataset/re_annotation_crop_20230613_splited_preprocessing_eq_hist2/test"
 
     if img_dir is not None and os.path.isdir(img_dir):
         predict(img_dir=img_dir)
     else:
+        print("img_dir = ", img_dir)
         raise OSError
