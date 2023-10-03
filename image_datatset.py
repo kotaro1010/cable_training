@@ -20,10 +20,8 @@ class CableCrackImageDataset(Dataset):
 
         all_imgs = [img_path for img_path in all_imgs if "all_bind_Correction" not in img_path]  # 展開図画像を除く
         self.all_imgs = sorted(all_imgs)
-        self.labels = [1 if "/anomalous/" in path else 0 for path in all_imgs]
+        self.labels = [1 if "/anomalous/" in path else 0 for path in self.all_imgs]
 
-        self.autoaug = transforms.AutoAugment(transforms.AutoAugmentPolicy.IMAGENET)
-        # self.autoaug = transforms.AutoAugment(transforms.AutoAugmentPolicy.SVHN)
         self.transform = transforms.Compose(
             [
                 transforms.Resize((384, 384)),  # swin-t, efficientNetV2, convnext
