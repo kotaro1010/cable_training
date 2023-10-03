@@ -69,26 +69,26 @@ class CrackDetectionModel(pl.LightningModule):
         img, label = batch
         output = self.forward(batch)
         loss = F.binary_cross_entropy(output.view(-1), label.type_as(output))
-        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
         img, label = batch
         output = self.forward(batch)
         loss = F.binary_cross_entropy(output.view(-1), label.type_as(output))
-        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val_loss", loss, prog_bar=True, logger=True)
 
         # Calculate validation metrics
         preds = (output > 0.5).float().view(-1).cpu()
         label = label.cpu()
-        self.log("val_acc", accuracy_score(label, preds), on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val_acc", accuracy_score(label, preds), prog_bar=True, logger=True)
         return loss
 
     def test_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
         img, label = batch
         output = self.forward(batch)
         loss = F.binary_cross_entropy(output.view(-1), label.type_as(output))
-        self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("test_loss", loss, prog_bar=True, logger=True)
 
         # Calculate test metrics
         preds = (output > 0.5).float().view(-1).cpu()
