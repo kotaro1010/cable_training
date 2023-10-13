@@ -51,7 +51,7 @@ def write_progress(filepath: str, text: str):
 def predict(img_dir: str = ""):
     # 顧客PCのGPUメモリ容量に合わせる。(GTX1050)
     # TODO 本番では解除するように。
-    torch.cuda.set_per_process_memory_fraction(0.2, 0)
+    # torch.cuda.set_per_process_memory_fraction(0.2, 0)
 
     write_progress(img_dir, "=====Start Prediction=====")
 
@@ -98,7 +98,7 @@ def predict(img_dir: str = ""):
     ##################
     # dataset_test = CableCrackImageDataset(images_directory=img_dir)
 
-    dataloader_test = DataLoader(dataset=dataset_test, batch_size=8, shuffle=False)
+    dataloader_test = DataLoader(dataset=dataset_test, batch_size=4, shuffle=False)
 
     # モデルの用意
     model_path = "saved_models/model_ckpt/2023-08-22T22:17:01.500486+09:00_splendid-deluge-127_epoch=9_step=6980_val_loss=0.11.ckpt"

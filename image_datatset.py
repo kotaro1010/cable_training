@@ -24,11 +24,12 @@ class CableCrackImageDataset(Dataset):
 
         self.transform = transforms.Compose(
             [
-                transforms.Resize((384, 384)),  # swin-t, efficientNetV2, convnext
-                # transforms.Resize((224, 224)),  # ViT
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),  # Normalize to ImageNet stats
+                transforms.Resize((480, 480)),
+                # transforms.Resize((384, 384)),  # swin-t, efficientNetV2, convnext
+                # # transforms.Resize((224, 224)),  # ViT
+                # transforms.Normalize(
+                #     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                # ),  # Normalize to ImageNet stats
             ]
         )
 
@@ -36,7 +37,7 @@ class CableCrackImageDataset(Dataset):
         img = torchvision.io.read_image(self.all_imgs[idx])
         # TODO 実装。
         # img = preprocessing(img)
-        img = self.autoaug(img)
+        # img = self.autoaug(img)
         img = self.transform(img.float())
         img = img.float()
         label = self.labels[idx]

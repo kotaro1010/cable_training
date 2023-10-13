@@ -48,4 +48,6 @@ RUN $(which python3) -m pip install \
     opencv-python scikit-image \
     black flake8
 
+COPY convnext_base-6075fbad.pth /home/appuser/.cache/torch/hub/checkpoints/convnext_base-6075fbad.pth
+
 WORKDIR /home/appuser/cable_bridge
